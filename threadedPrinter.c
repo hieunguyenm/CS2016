@@ -11,9 +11,10 @@ struct shared_data
   pthread_cond_t cond1;
   pthread_cond_t cond2;
   unsigned int finished:1;
+  unsigned int printed:1;
 };
 
-void* mainThreadFunction();
+void* mainThreadFunction(struct shared_data* shared_data);
 void* consumerFunction(void* threadId);
 void* printerThreadFunction(void* threadId);
 
@@ -26,11 +27,12 @@ int main (int argc, char** argv)
   pthread_cond_init(&shared_data.cond2, NULL);
 
   shared_data.finished = 0;
+  shared_data.printed = 1;
 
   // Creating main thread
   pthread_t main_thread;
   printf("Creating main thread\n");
-  int rc = pthread_create(&main_thread, NULL, mainThreadFunction, NULL);
+  int rc = pthread_create(&main_thread, NULL, mainThreadFunction, &shared_data);
   if(rc)
   {
     printf("ERROR return code from pthread_create(): %d\n", rc);
@@ -43,7 +45,7 @@ int main (int argc, char** argv)
   return 0;
 }
 
-void* mainThreadFunction()
+void* mainThreadFunction(struct shared_data* shared_data)
 {
   printf("Main thread created\n");
 
