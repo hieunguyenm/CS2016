@@ -5,16 +5,32 @@
 #define NUM_CONSUMER_THREADS 3
 #define NUM_TOTAL_THREADS (NUM_CONSUMER_THREADS + 1)
 
-void* mainThreadFunction();
-void* consumerFunction(void *threadId);
-void* printerThreadFunction(void *threadId);
-
-int main (int argc, const char *argv[])
+struct shared_data
 {
+  pthread_mutex_t mutex;
+  pthread_cond_t cond1;
+  pthread_cond_t cond2;
+  unsigned int finished:1;
+};
+
+void* mainThreadFunction();
+void* consumerFunction(void* threadId);
+void* printerThreadFunction(void* threadId);
+
+int main (int argc, char** argv)
+{
+  struct shared_data shared_data;
+
+  pthread_mutex_init(&shared_data.mutex, NULL);
+  pthread_cond_init(&shared_data.cond1, NULL);
+  pthread_cond_init(&shared_data.cond2, NULL);
+
+  shared_data.finished = 0;
+
   // Creating main thread
-  pthread_t mainThread;
+  pthread_t main_thread;
   printf("Creating main thread\n");
-  int rc = pthread_create(&mainThread, NULL, mainThreadFunction, NULL);
+  int rc = pthread_create(&main_thread, NULL, mainThreadFunction, NULL);
   if(rc)
   {
     printf("ERROR return code from pthread_create(): %d\n", rc);
@@ -22,7 +38,7 @@ int main (int argc, const char *argv[])
   }
 
   // Waiting for main thread to close
-  pthread_join(mainThread, NULL);
+  pthread_join(main_thread, NULL);
 
   return 0;
 }
@@ -38,7 +54,7 @@ void* mainThreadFunction()
   for(int t = 0;(t < NUM_CONSUMER_THREADS);t++)
   {
     printf("Creating thread\n");
-    rc = pthread_create(&threads[t], NULL, consumerFunction, (void *) t);
+    rc = pthread_create(&threads[t], NULL, consumerFunction, (void*) t);
     if(rc)
     {
       printf("ERROR return code from pthread_create(): %d\n", rc);
@@ -48,7 +64,7 @@ void* mainThreadFunction()
 
   // Creating printer thread
   printf("Creating printer thread\n");
-  rc = pthread_create(&threads[NUM_TOTAL_THREADS - 1], NULL, printerThreadFunction, (void *) (NUM_TOTAL_THREADS - 1));
+  rc = pthread_create(&threads[NUM_TOTAL_THREADS - 1], NULL, printerThreadFunction, (void*) (NUM_TOTAL_THREADS - 1));
   if(rc)
   {
     printf("ERROR return code from pthread_create(): %d\n", rc);
@@ -58,13 +74,13 @@ void* mainThreadFunction()
   pthread_exit(NULL);
 }
 
-void* consumerFunction(void *threadId)
+void* consumerFunction(void* threadId)
 {
   printf("Consumer thread id: %d\n", threadId);
   pthread_exit(NULL);
 }
 
-void* printerThreadFunction(void *threadId)
+void* printerThreadFunction(void* threadId)
 {
   printf("Printer thread id: %d\n", threadId);
   pthread_exit(NULL);
