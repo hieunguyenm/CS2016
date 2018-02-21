@@ -1,22 +1,22 @@
 #include <pthread.h>
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define _GNU_SOURCE
 
 #define NUM_CONSUMER_THREADS 3
 #define NUM_TOTAL_THREADS (NUM_CONSUMER_THREADS + 1)
 #define BUFF_SIZE 100;
 
+pthread_mutex_t mutex;
+pthread_cond_t consumer_cond;
+pthread_cond_t printer_cond;
+
 struct shared_data
 {
-  pthread_mutex_t mutex;
-  pthread_cond_t buf_full;
-  pthread_cond_t buf_empty;
-  int threadUsed;
-  unsigned int printed:1;
-  unsigned int toPrint:1;
   char* input_string;
+  unsigned int finished:1;
 };
 
 void* mainThreadFunction(void* shared_data);
@@ -24,7 +24,7 @@ void* consumerFunction(void* threadId);
 void* printerThreadFunction(void* threadId);
 
 int main (int argc, char** argv)
-{ 
+{
   // Creating main thread
   pthread_t main_thread;
   printf("Creating main thread\n");
@@ -44,13 +44,13 @@ int main (int argc, char** argv)
 void* mainThreadFunction(void* argv)
 {
   struct shared_data shared_data;
-  
-  pthread_mutex_init(&shared_data.mutex, NULL);
-  pthread_cond_init(&shared_data.cond1, NULL);
-  pthread_cond_init(&shared_data.cond2, NULL);
 
-  shared_data.printed = 0;
-  shared_data.toPrint = 0;
+  pthread_mutex_init(&mutex, NULL);
+  pthread_cond_init(&consumer_cond, NULL);
+  pthread_cond_init(&printer_cond, NULL);
+
+  // shared_data.printed = 0;
+  // shared_data.toPrint = 0;
 
   printf("Main thread created\n");
 
@@ -69,7 +69,7 @@ void* mainThreadFunction(void* argv)
     }
   }
 
-	
+
   // Creating printer thread
   printf("Creating printer thread\n");
   rc = pthread_create(&threads[NUM_TOTAL_THREADS - 1], NULL, printerThreadFunction, (void*) &shared_data);
@@ -78,45 +78,48 @@ void* mainThreadFunction(void* argv)
     printf("ERROR return code from pthread_create(): %d\n", rc);
     exit(-1);
   }
-  
-	//getLine 
+
+	//getLine
 	char *buffer;
   size_t bufsize = BUFF_SIZE;
-  
-  int finished = 0;
-  while(!finished)
+
+  while(!shared_data.finished)
   {
 		buffer = (char *) malloc(bufsize * sizeof(char));
 		if(buffer == NULL)
 		{
-			printf("ERROR: U DUM");
+			printf("ERROR something went very wrong");
 			exit(-1);
 		}
-	
+
 		getline(&buffer, &bufsize, stdin);
-		
+
 		if(strcmp("\n", buffer) == 0)
-			finished = 1;
-		
-		pthread_mutex_lock(&shared_data.mutex);
+			shared_data.finished = 1;
+
+		pthread_mutex_lock(&mutex);
 		strcpy(&shared_data.input_string, &buffer);
-		shared_data.toPrint = 1;
-		pthread_cond_signal (&cond);
-		pthread_mutex_unlock(&shared_data.mutex);
+		pthread_mutex_unlock(&mutex);
+    pthread_cond_signal(&consumer_cond);
 	}
-	
+
   pthread_exit(NULL);
 }
 
-void* consumerFunction(void* shared_data)
+void* consumerFunction(void* shared_data_p)
 {
-	pthread_mutex_lock(&shared_data->mutex);
-	while(!shared_data->toPrint)
-		pthread_cond_wait(&shared_data->buf_full, &shared_data->mutex);
+  printf("Thread created\n");
+
+  pthread_mutex_lock(&mutex);
+  pthread_cond_wait(&consumer_cond, &mutex);
+  printf("%s\n", shared_data_p->input_string);
+  pthread_mutex_unlock(&mutex);
+
   pthread_exit(NULL);
 }
 
 void* printerThreadFunction(void* shared_data)
 {
+  printf("Printer thread created\n");
   pthread_exit(NULL);
 }
