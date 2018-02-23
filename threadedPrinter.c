@@ -98,7 +98,7 @@ void* mainThreadFunction(void* argv)
 			shared_data.finished = 1;
 
 		pthread_mutex_lock(&mutex);
-		strcpy(&shared_data.input_string, &buffer);
+		strcpy(shared_data.input_string, buffer);
 		pthread_mutex_unlock(&mutex);
     pthread_cond_signal(&consumer_cond);
 	}
@@ -112,7 +112,7 @@ void* consumerFunction(void* shared_data_p)
 
   pthread_mutex_lock(&mutex);
   pthread_cond_wait(&consumer_cond, &mutex);
-  printf("%s\n", shared_data_p->input_string);
+  printf("%s\n", ((struct shared_data *) shared_data_p)shared_data_p->input_string);
   pthread_mutex_unlock(&mutex);
 
   pthread_exit(NULL);
