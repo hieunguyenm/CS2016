@@ -287,41 +287,37 @@ public class ThreadCB extends IflThreadCB
 
 		// If necessary, remove current thread from processor and
 		// reschedule it.
-		if (runningThread != null)
+
+		// Only allow thread to use the processor if the current thread is null
+		if (runningThread == null)
 		{
-			MyOut.print("osp.Threads.ThreadCB", "Preempting currently running " + runningThread);
+			// Select thread from ready queue.
+			threadToDispatch = (ThreadCB) readyQueue.removeHead();
+			if (threadToDispatch == null)
+			{
+				MyOut.print("osp.Threads.ThreadCB", "Can't find suitable thread to dispatch");
+				MMU.setPTBR(null);
+				return FAILURE;
+			}
 
-			runningTask.setCurrentThread(null);
+			// Put the thread on the processor.
+			MMU.setPTBR(threadToDispatch.getTask().getPageTable());
 
-			MMU.setPTBR(null);
+			// set thread to dispatch as the current thread of its task
+			threadToDispatch.getTask().setCurrentThread(threadToDispatch);
 
-			runningThread.setStatus(ThreadReady);
-			readyQueue.append(runningThread);
+			// Set thread's status.
+			threadToDispatch.setStatus(ThreadRunning);
+
+			MyOut.print("osp.Threads.ThreadCB", "Dispatching " + threadToDispatch);
+
+			return SUCCESS;
 		}
-
-		// Select thread from ready queue.
-		threadToDispatch = (ThreadCB) readyQueue.removeHead();
-		if (threadToDispatch == null)
+		else
 		{
-			MyOut.print("osp.Threads.ThreadCB", "Can't find suitable thread to dispatch");
-			MMU.setPTBR(null);
-			return FAILURE;
+			MyOut.print("osp.Threads.ThreadCB", "Current thread is still running so the threadToDispatch will not be run");
+			return SUCCESS;
 		}
-
-		// Put the thread on the processor.
-		MMU.setPTBR(threadToDispatch.getTask().getPageTable());
-
-		// set thread to dispatch as the current thread of its task
-		threadToDispatch.getTask().setCurrentThread(threadToDispatch);
-
-		// Set thread's status.
-		threadToDispatch.setStatus(ThreadRunning);
-
-		MyOut.print("osp.Threads.ThreadCB", "Dispatching " + threadToDispatch);
-
-		//HTimer.set(150);
-
-		return SUCCESS;
 	}
 
 	/**
