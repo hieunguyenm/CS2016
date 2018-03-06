@@ -11,6 +11,9 @@ import osp.Devices.*;
 import osp.Memory.*;
 import osp.Resources.*;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
+
 /**
  * This class is responsible for actions related to threads, including creating,
  * killing, dispatching, resuming, and suspending threads.
@@ -19,7 +22,25 @@ import osp.Resources.*;
  */
 public class ThreadCB extends IflThreadCB
 {
-	private static GenericList readyQueue;
+	private static class ThreadComparator implements Comparator<ThreadCB>
+	{
+		@Override
+		public int compare(ThreadCB thread1, ThreadCB thread2)
+		{
+			if(thread1 == null || thread2 == null)
+				return 0;
+
+			if(thread1.getPriority() < thread2.getPriority())
+				return -1;
+			else if(thread1.getPriority() > thread2.getPriority())
+				return 1;
+
+			return 0;
+		}
+	}
+
+	private static Comparator<ThreadCB> threadComparator = new ThreadComparator();
+	private static PriorityQueue<ThreadCB> readyQueue;
 
 	/**
 	 * The thread constructor. Must call
@@ -43,7 +64,7 @@ public class ThreadCB extends IflThreadCB
 	 */
 	public static void init()
 	{
-		readyQueue = new GenericList();
+		readyQueue = new PriorityQueue<ThreadCB>(1, threadComparator);
 	}
 
 	/**
@@ -101,7 +122,7 @@ public class ThreadCB extends IflThreadCB
 		// added. Therefore will need to change create to check if the task to be added
 		// has a higher priority then the head of the list. If so it becomes the new head.
 
-		readyQueue.append(newThread);
+		readyQueue.add(newThread);
 
 		MyOut.print("osp.Threads.ThreadCB", "Successfully added " + newThread + " to " + task);
 
@@ -257,7 +278,7 @@ public class ThreadCB extends IflThreadCB
 
 		// Put the thread on the ready queue, if appropriate
 		if (getStatus() == ThreadReady)
-			readyQueue.append(this);
+			readyQueue.add(this);
 
 		dispatch();
 	}
@@ -296,11 +317,11 @@ public class ThreadCB extends IflThreadCB
 			MMU.setPTBR(null);
 
 			runningThread.setStatus(ThreadReady);
-			readyQueue.append(runningThread);
+			readyQueue.add(runningThread);
 		}
 
 		// Select thread from ready queue.
-		threadToDispatch = (ThreadCB) readyQueue.removeHead();
+		threadToDispatch = readyQueue.poll();
 		if (threadToDispatch == null)
 		{
 			MyOut.print("osp.Threads.ThreadCB", "Can't find suitable thread to dispatch");
@@ -319,7 +340,7 @@ public class ThreadCB extends IflThreadCB
 
 		MyOut.print("osp.Threads.ThreadCB", "Dispatching " + threadToDispatch);
 
-		//HTimer.set(150);
+		HTimer.set(150);
 
 		return SUCCESS;
 	}
