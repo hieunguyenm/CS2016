@@ -13,6 +13,7 @@ import osp.Resources.*;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.Random;
 
 /**
  * This class is responsible for actions related to threads, including creating,
@@ -41,7 +42,7 @@ public class ThreadCB extends IflThreadCB
 
 	private static Comparator<ThreadCB> threadComparator = new ThreadComparator();
 	private static PriorityQueue<ThreadCB> readyQueue;
-
+	private static Random random = new Random();
 	/**
 	 * The thread constructor. Must call
 	 *
@@ -108,6 +109,11 @@ public class ThreadCB extends IflThreadCB
 		newThread.setStatus(ThreadReady);
 
 		newThread.setTask(task);
+
+		if(random.nextBoolean())
+			newThread.setPriority(1);
+
+		MyOut.print("osp.Threads.ThreadCB", "task priority: " + newThread.getPriority());
 
 		// Add the new thread to the task.
 		if (task.addThread(newThread) != SUCCESS)
@@ -311,6 +317,7 @@ public class ThreadCB extends IflThreadCB
 		if (runningThread != null)
 		{
 			MyOut.print("osp.Threads.ThreadCB", "Preempting currently running " + runningThread);
+			MyOut.print("osp.Threads.ThreadCB", "Running Thread priority: " + runningThread.getPriority());
 
 			runningTask.setCurrentThread(null);
 
@@ -328,6 +335,8 @@ public class ThreadCB extends IflThreadCB
 			MMU.setPTBR(null);
 			return FAILURE;
 		}
+
+		MyOut.print("osp.Threads.ThreadCB", "threadToDispatch priority: " + threadToDispatch.getPriority());
 
 		// Put the thread on the processor.
 		MMU.setPTBR(threadToDispatch.getTask().getPageTable());
