@@ -106,11 +106,6 @@ public class ThreadCB extends IflThreadCB
 			return null;
 		}
 
-		// The idea of preemptive priority-based scheduling is that the current thread
-		// is taken off the processor when/if a thread with a higher priority is being
-		// added. Therefore will need to change create to check if the task to be added
-		// has a higher priority then the head of the list. If so it becomes the new head.
-
 		switch(newThread.getPriority())
 		{
 		case 1:
