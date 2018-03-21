@@ -108,13 +108,13 @@ public class ThreadCB extends IflThreadCB
 
 		switch(newThread.getPriority())
 		{
-		case 1:
+		case 0:
 			readyQueue1.append(newThread);
 			break;
-		case 2:
+		case 1:
 			readyQueue2.append(newThread);
 			break;
-		case 3:
+		case 2:
 			readyQueue3.append(newThread);
 		}
 
@@ -150,13 +150,13 @@ public class ThreadCB extends IflThreadCB
 			// Delete thread from ready queue.
 			switch(this.getPriority())
 			{
-			case 1:
+			case 0:
 				readyQueue1.remove(this);
 				break;
-			case 2:
+			case 1:
 				readyQueue2.remove(this);
 				break;
-			case 3:
+			case 2:
 				readyQueue3.remove(this);
 				break;
 			}
@@ -250,13 +250,13 @@ public class ThreadCB extends IflThreadCB
 
 			switch(this.getPriority())
 			{
-			case 1:
+			case 0:
 				readyQueue1.remove(this);
 				break;
-			case 2:
+			case 1:
 				readyQueue2.remove(this);
 				break;
-			case 3:
+			case 2:
 				readyQueue3.remove(this);
 				break;
 			}
@@ -297,13 +297,13 @@ public class ThreadCB extends IflThreadCB
 		{
 			switch(this.getPriority())
 			{
-			case 1:
+			case 0:
 				readyQueue1.append(this);
 				break;
-			case 2:
+			case 1:
 				readyQueue2.append(this);
 				break;
-			case 3:
+			case 2:
 				readyQueue3.append(this);
 				break;
 			}
@@ -349,13 +349,13 @@ public class ThreadCB extends IflThreadCB
 			runningThread.setStatus(ThreadReady);
 			switch(runningThread.getPriority())
 			{
-			case 1:
+			case 0:
 				readyQueue1.append(runningThread);
 				break;
-			case 2:
+			case 1:
 				readyQueue2.append(runningThread);
 				break;
-			case 3:
+			case 2:
 				readyQueue3.append(runningThread);
 				break;
 			}		}
