@@ -6,3 +6,6 @@ An excersise in using pthreads, condition variables and mutexes in a priducer/co
 
 ## Practical 3
 Thread scheduling with OSP2.
+
+## Practical 4
+Model testing with SPIN and PROMELA.
