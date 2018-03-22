@@ -1,9 +1,11 @@
 //#define TEST_STARVE
+#define TEST_LIVELOCK
 #define N 5
 
 byte forks[N];
 byte count_eat;
 bool think[N], hungry[N], eat[N] = false;
+bool has_eaten = false;
 
 init{
 
@@ -15,6 +17,7 @@ init{
     }
     
     //run Philosopher(1);
+    //run Philosopher(2);
     //run Philosopher(3);
 }
 
@@ -46,6 +49,7 @@ eat_action:
         forks[(id + 1) % N] = 0;
     }
     forks[id] = 0;
+    has_eaten = true;
     goto think_action;
 }
 
@@ -63,4 +67,17 @@ accept_S4:
 }
 #endif
 
+#ifdef TEST_LIVELOCK
+never{
+T0_init:
+    do
+        :: (! ((has_eaten)) && (np_)) -> goto accept_S6
+        :: (! ((has_eaten))) -> goto T0_init
+    od;
+    accept_S6:
+    do
+        :: (! ((has_eaten)) && (np_)) -> goto accept_S6
+    od;
+}
+#endif
 
