@@ -1,5 +1,7 @@
 //#define TEST_STARVE
-#define TEST_LIVELOCK
+//#define TEST_LIVELOCK
+//#define STUPID_PHILOSOPHERS
+#define SMART_PHILOSOPHERS
 #define N 5
 
 byte forks[N];
@@ -21,6 +23,7 @@ init{
     //run Philosopher(3);
 }
 
+#ifdef STUPID_PHILOSOPHERS
 active proctype Philosopher(byte id){
 think_action: 
     atomic{think[id] = true; hungry[id] = false; eat[id] = false;}
@@ -52,6 +55,40 @@ eat_action:
     has_eaten = true;
     goto think_action;
 }
+#endif
+
+#ifdef SMART_PHILOSOPHERS
+active proctype Philosopher(byte id){
+    byte left = id; 
+    byte right = (id + 1) % N;
+think_action: 
+    atomic{think[id] = true; hungry[id] = false; eat[id] = false;}
+
+hungry_action:
+    atomic{think[id] = false; hungry[id] = true; eat[id] = false;}
+    if :: left < right;
+         atomic{
+            forks[left] == -1 -> forks[left] = id;
+        }
+         atomic{
+            forks[right] == -1 -> forks[right] = id;
+        }
+        :: right < left;
+        atomic{
+            forks[right] == -1 -> forks[right] = id;
+        }
+         atomic{
+            forks[left] == -1 -> forks[left] = id;
+        }
+    fi;
+
+eat_action: 
+    atomic{think[id] = false; hungry[id] = false; eat[id] = true;}
+done_action:
+    forks[right] = -1; forks[left] = -1;
+    goto think_action;
+}
+#endif
 
 #ifdef TEST_STARVE
 never{
