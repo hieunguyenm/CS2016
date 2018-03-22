@@ -25,5 +25,6 @@ active proctype Q() {
 active proctype whenFinished() {
     finish == 2;
     printf("n = %d\n", n);
+    assert(n == 4);
 }
 
